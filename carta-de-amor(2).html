@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uma cartinha pra você</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fff2e8;
+    --pink-pale:#ffd9e3;
+    --pink:#ff8fab;
+    --red:#d5424c;
+    --red-deep:#8f232c;
+    --ink:#3a1f22;
+    --gold:#f4a300;
+    --cat:#332b36;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    height:100%;
+    background:var(--cream);
+    font-family:'Quicksand', sans-serif;
+    color:var(--ink);
+    overflow:hidden;
+  }
+
+  #stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* ---------- heart confetti backdrop ---------- */
+  .hearts-bg{
+    position:absolute; inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:0;
+  }
+  .hearts-bg span{
+    position:absolute;
+    top:-40px;
+    font-size:14px;
+    color:var(--pink);
+    opacity:.55;
+    animation:fall linear infinite;
+  }
+  @keyframes fall{
+    to{ transform:translateY(112vh) rotate(25deg); }
+  }
+
+  /* ---------- shared screen box ---------- */
+  .screen{
+    position:relative;
+    z-index:1;
+    width:min(92vw, 480px);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+  .screen.active{ display:flex; }
+
+  .pixel-label{
+    font-family:'Press Start 2P', monospace;
+    letter-spacing:1px;
+  }
+
+  /* ---------- SCREEN 1 : envelope ---------- */
+  #envelope-wrap{
+    cursor:pointer;
+    user-select:none;
+  }
+  .envelope{
+    position:relative;
+    width:180px;
+    height:130px;
+    margin:0 auto 22px;
+  }
+  .env-body{
+    position:absolute; inset:0;
+    background:var(--pink-pale);
+    border:4px solid var(--red);
+    border-radius:4px;
+  }
+  .env-body::before{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0; top:38%;
+    background:
+      linear-gradient(135deg, transparent 49.3%, var(--red) 50%),
+      linear-gradient(-135deg, transparent 49.3%, var(--red) 50%);
+    background-size:50% 100%;
+    background-position:left, right;
+    background-repeat:no-repeat;
+    opacity:.18;
+  }
+  .env-flap{
+    position:absolute;
+    top:-4px; left:-4px; right:-4px;
+    height:70px;
+    background:var(--red);
+    clip-path:polygon(0 0, 100% 0, 50% 78%);
+    transform-origin:top center;
+    transition:transform .55s cubic-bezier(.6,-0.2,.35,1.4);
+    border-radius:4px 4px 0 0;
+  }
+  .envelope.open .env-flap{
+    transform:rotateX(150deg);
+  }
+  .env-heart{
+    position:absolute;
+    left:50%; top:58%;
+    transform:translate(-50%,-50%);
+    font-size:26px;
+    color:var(--red);
+  }
+  #envelope-wrap p{
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    color:var(--red-deep);
+    line-height:1.9;
+  }
+  #envelope-wrap small{
+    display:block;
+    margin-top:10px;
+    font-family:'Quicksand',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    opacity:.6;
+  }
+
+  /* ---------- SCREEN 2 : letter ---------- */
+  .letter-card{
+    background:var(--pink-pale);
+    border:5px solid var(--red);
+    border-radius:6px;
+    padding:22px 20px 18px;
+    width:100%;
+    max-height:78vh;
+    display:flex;
+    flex-direction:column;
+  }
+  .letter-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    color:var(--red-deep);
+    margin:0 0 14px;
+  }
+  .letter-text{
+    text-align:left;
+    overflow-y:auto;
+    padding-right:6px;
+    font-size:15px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  .letter-text p{ margin:0 0 12px; }
+  .letter-text::-webkit-scrollbar{ width:6px; }
+  .letter-text::-webkit-scrollbar-thumb{ background:var(--pink); border-radius:3px; }
+
+  .pixel-btn{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    padding:12px 18px;
+    border:3px solid var(--red-deep);
+    background:var(--red);
+    color:#fff;
+    border-radius:3px;
+    cursor:pointer;
+    box-shadow:0 4px 0 var(--red-deep);
+    transition:transform .08s ease;
+  }
+  .pixel-btn:active{
+    transform:translateY(4px);
+    box-shadow:none;
+  }
+  #continue-btn{ margin-top:16px; align-self:center; }
+
+  /* ---------- SCREEN 3 : question ---------- */
+  .console{
+    width:100%;
+    background:var(--pink-pale);
+    border:5px solid var(--red);
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .console-bar{
+    background:var(--red);
+    color:#fff;
+    font-family:'Press Start 2P', monospace;
+    font-size:16px;
+    padding:10px;
+    letter-spacing:3px;
+  }
+  .console-hearts{
+    padding:10px 0 4px;
+    font-size:22px;
+    color:var(--red);
+    letter-spacing:14px;
+  }
+  .console-body{
+    position:relative;
+    padding:14px 10px 26px;
+    min-height:280px;
+    background-image:
+      linear-gradient(45deg, var(--pink) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--pink) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--pink) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--pink) 75%);
+    background-size:22px 22px;
+    background-position:0 0, 0 11px, 11px -11px, -11px 0px;
+    background-color: var(--pink-pale);
+    opacity:.98;
+  }
+  .question-text{
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--red-deep);
+    margin:4px 0 14px;
+  }
+  #catCanvas{
+    image-rendering:pixelated;
+    width:180px;
+    height:180px;
+    margin:0 auto 18px;
+    display:block;
+  }
+  .answers{
+    display:flex;
+    justify-content:center;
+    min-height:52px;
+  }
+  #no-btn{
+    position:absolute;
+    background:#fff; color:var(--red); border-color:var(--red);
+    box-shadow:0 4px 0 var(--red);
+    transition:left .18s ease, top .18s ease, transform .08s ease;
+  }
+
+  /* ---------- SCREEN 4 : final message ---------- */
+  .final-card{
+    background:var(--pink-pale);
+    border:5px solid var(--pink);
+    border-radius:6px;
+    padding:26px 22px;
+    width:100%;
+    max-height:80vh;
+    overflow-y:auto;
+  }
+  .final-card::-webkit-scrollbar{ width:6px; }
+  .final-card::-webkit-scrollbar-thumb{ background:var(--pink); border-radius:3px; }
+  .yay{
+    font-family:'Press Start 2P', monospace;
+    font-size:20px;
+    color:var(--red);
+    margin-bottom:16px;
+  }
+  .final-card p{
+    text-align:left;
+    font-size:15px;
+    line-height:1.7;
+    margin:0 0 12px;
+    color:var(--ink);
+  }
+  .final-cat{
+    width:120px;
+    image-rendering:pixelated;
+    margin:6px auto 16px;
+    display:block;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div class="hearts-bg" id="heartsBg"></div>
+
+  <!-- SCREEN 1: ENVELOPE -->
+  <div class="screen active" id="screen-envelope">
+    <div id="envelope-wrap">
+      <div class="envelope" id="envelope">
+        <div class="env-body"></div>
+        <div class="env-heart">♥</div>
+        <div class="env-flap"></div>
+      </div>
+      <p>Carta para você!!</p>
+      <small>toque para abrir</small>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: LETTER -->
+  <div class="screen" id="screen-letter">
+    <div class="letter-card">
+      <p class="letter-title">meu amor,</p>
+      <div class="letter-text" id="letterText">
+        <p>Eu só queria que você soubesse o quanto eu gosto de você. Às vezes as palavras parecem pequenas demais pra descrever o que eu sinto, mas vou tentar mesmo assim.</p>
+        <p>Você deixa até os dias mais bobos ficarem mais leves. Eu penso em você em momentos aleatórios do dia e isso sempre me faz sorrir sozinho(a) feito bobo(a).</p>
+        <p>Sei que eu não sou perfeito(a) e que já errei em alguns momentos. Mas quero que você saiba que meu coração nunca quis te machucar, e que eu estou sempre aprendendo a ser melhor pra você.</p>
+        <p>O que eu mais guardo com carinho são os nossos momentos juntos — as risadas bobas, as conversas até tarde, e até os silêncios confortáveis.</p>
+        <p>Antes de continuar, eu preciso te perguntar uma coisa importante...</p>
+      </div>
+      <button class="pixel-btn" id="continue-btn">continuar »</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: QUESTION -->
+  <div class="screen" id="screen-question">
+    <div class="console">
+      <div class="console-bar">LOVE</div>
+      <div class="console-hearts">♥ ♥ ♥</div>
+      <div class="console-body">
+        <p class="question-text">Você me ama?</p>
+        <canvas id="catCanvas" width="60" height="60"></canvas>
+        <div class="answers">
+          <button class="pixel-btn" id="yes-btn">SIM</button>
+        </div>
+        <button class="pixel-btn" id="no-btn">NÃO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: FINAL MESSAGE -->
+  <div class="screen" id="screen-final">
+    <div class="final-card">
+      <p class="yay">Aeee!! ♥</p>
+      <canvas class="final-cat" id="finalCat" width="60" height="60"></canvas>
+      <p>Eu sabia! rs. Obrigado(a) por dizer isso, mesmo sabendo que o gatinho ali tentou fugir de você o tempo todo.</p>
+      <p>Queria só deixar registrado que você é muito importante pra mim. Você faz parte dos meus dias de um jeito que é difícil de explicar, e eu fico feliz só de saber que a gente tem um ao outro.</p>
+      <p>Obrigado(a) por ler até aqui, por estar comigo e por aguentar essas ideias bobas que eu tenho às vezes (tipo essa carta em forma de site).</p>
+      <p>Com carinho, sempre. ♥</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ personalização rápida ============
+   troque o texto entre <p> na letter-text e no final-card
+   pelo que você quiser, e troque "meu amor" pelo nome da pessoa.
+================================================== */
+
+/* ---------- floating hearts background ---------- */
+const heartsBg = document.getElementById('heartsBg');
+const heartChars = ['♥','❤','💗'];
+for(let i=0;i<26;i++){
+  const s = document.createElement('span');
+  s.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
+  s.style.left = Math.random()*100 + 'vw';
+  s.style.fontSize = (10 + Math.random()*16) + 'px';
+  s.style.animationDuration = (7 + Math.random()*10) + 's';
+  s.style.animationDelay = (Math.random()*10) + 's';
+  heartsBg.appendChild(s);
+}
+
+/* ---------- screen switching ---------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------- screen 1 -> 2 ---------- */
+const envelopeWrap = document.getElementById('envelope-wrap');
+const envelope = document.getElementById('envelope');
+envelopeWrap.addEventListener('click', ()=>{
+  envelope.classList.add('open');
+  setTimeout(()=> showScreen('screen-letter'), 550);
+});
+
+/* ---------- screen 2 -> 3 ---------- */
+document.getElementById('continue-btn').addEventListener('click', ()=>{
+  showScreen('screen-question');
+  // só dá pra medir posições depois que a telinha fica visível (display:none antes disso)
+  requestAnimationFrame(placeNoBtnInitially);
+});
+
+/* ---------- pixel cat drawing (canvas) ---------- */
+function drawCat(canvas){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,60,60);
+  ctx.imageSmoothingEnabled = false;
+
+  // heart body
+  ctx.fillStyle = '#d5424c';
+  ctx.beginPath();
+  ctx.moveTo(30,54);
+  ctx.bezierCurveTo(4,34, 6,14, 20,12);
+  ctx.bezierCurveTo(27,11, 30,16, 30,20);
+  ctx.bezierCurveTo(30,16, 33,11, 40,12);
+  ctx.bezierCurveTo(54,14, 56,34, 30,54);
+  ctx.closePath();
+  ctx.fill();
+
+  // cat head
+  ctx.fillStyle = '#332b36';
+  ctx.beginPath();
+  ctx.arc(30,26,15,0,Math.PI*2);
+  ctx.fill();
+
+  // ears
+  ctx.beginPath();
+  ctx.moveTo(16,20); ctx.lineTo(20,4); ctx.lineTo(27,16); ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(44,20); ctx.lineTo(40,4); ctx.lineTo(33,16); ctx.closePath();
+  ctx.fill();
+
+  // tail
+  ctx.strokeStyle = '#332b36';
+  ctx.lineWidth = 6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(44,46);
+  ctx.quadraticCurveTo(60,44, 56,30);
+  ctx.stroke();
+
+  // eyes (surprised look)
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(21,24,6,7);
+  ctx.fillRect(33,24,6,7);
+  ctx.strokeStyle = '#332b36';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(21,24,6,7);
+  ctx.strokeRect(33,24,6,7);
+
+  // little bowtie
+  ctx.fillStyle = '#ff8fab';
+  ctx.beginPath();
+  ctx.moveTo(24,38); ctx.lineTo(30,34); ctx.lineTo(24,44); ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(36,38); ctx.lineTo(30,34); ctx.lineTo(36,44); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#c1272d';
+  ctx.fillRect(28,36,4,4);
+}
+drawCat(document.getElementById('catCanvas'));
+drawCat(document.getElementById('finalCat'));
+
+/* ---------- runaway "NÃO" button ---------- */
+const consoleBody = document.querySelector('.console-body');
+const noBtn = document.getElementById('no-btn');
+const yesBtn = document.getElementById('yes-btn');
+
+const teases = ['NÃO','hã?','pera','não vale','fugiu!','tenta de novo','rs','não mesmo','quase','abusado(a)'];
+let teaseIndex = 0;
+
+function evadeNo(){
+  const bodyRect = consoleBody.getBoundingClientRect();
+  const btnRect = noBtn.getBoundingClientRect();
+  const maxLeft = bodyRect.width - btnRect.width - 10;
+  const maxTop = bodyRect.height - btnRect.height - 10;
+
+  const newLeft = Math.max(10, Math.random() * maxLeft);
+  const newTop = Math.max(10, Math.random() * maxTop);
+
+  noBtn.style.left = newLeft + 'px';
+  noBtn.style.top = newTop + 'px';
+
+  teaseIndex = (teaseIndex + 1) % teases.length;
+  noBtn.textContent = teases[teaseIndex];
+}
+
+// posiciona o botão NÃO ao lado do SIM assim que a telinha carrega
+function placeNoBtnInitially(){
+  const bodyRect = consoleBody.getBoundingClientRect();
+  const yesRect = yesBtn.getBoundingClientRect();
+  const noRect = noBtn.getBoundingClientRect();
+
+  let left = (yesRect.right - bodyRect.left) + 12;
+  let top = (yesRect.top - bodyRect.top) + (yesRect.height - noRect.height) / 2;
+
+  // garante que nasce dentro da telinha mesmo em telas pequenas
+  const maxLeft = bodyRect.width - noRect.width - 10;
+  left = Math.min(left, maxLeft);
+
+  noBtn.style.left = left + 'px';
+  noBtn.style.top = top + 'px';
+}
+window.addEventListener('resize', ()=>{
+  if(document.getElementById('screen-question').classList.contains('active')){
+    placeNoBtnInitially();
+  }
+});
+
+// evade only when the mouse actually passes over the button
+noBtn.addEventListener('pointerenter', (e)=>{
+  if(e.pointerType === 'mouse'){
+    evadeNo();
+  }
+});
+
+// belt-and-suspenders: any direct hit still evades instead of "clicking"
+noBtn.addEventListener('pointerdown', (e)=>{
+  e.preventDefault();
+  evadeNo();
+});
+noBtn.addEventListener('click', (e)=>{
+  e.preventDefault();
+  evadeNo();
+});
+noBtn.addEventListener('touchstart', (e)=>{
+  e.preventDefault();
+  evadeNo();
+}, {passive:false});
+
+/* ---------- YES -> final screen ---------- */
+yesBtn.addEventListener('click', ()=>{
+  showScreen('screen-final');
+});
+</script>
+</body>
+</html>
